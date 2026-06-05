@@ -3,10 +3,7 @@
 // ============================================================================
 // 使用官方镜像 ghcr.io/ibm/mcp-context-forge，kubectl apply 部署。
 //
-// Coding DevOps 凭据管理 → 新增凭据:
-//   凭据ID: tke-kubeconfig
-//   类型:   上传文件
-//   内容:   TKE 集群的 kubeconfig 文件
+// Coding DevOps: 凭据管理中添加 TKE 集群凭据，凭据 ID 填入环境变量即可
 // ============================================================================
 
 pipeline {
@@ -26,7 +23,7 @@ pipeline {
 
         stage('部署到 TKE') {
             steps {
-                withCredentials([file(credentialsId: 'tke-kubeconfig', variable: 'KUBECONFIG')]) {
+                withCredentials([file(credentialsId: env.TKE_CLUSTER_CREDENTIAL_ID, variable: 'KUBECONFIG')]) {
                     sh '''
                         # 确保 namespace 存在
                         kubectl get namespace mcp-gateway 2>/dev/null || kubectl create namespace mcp-gateway
