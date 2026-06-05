@@ -1,13 +1,11 @@
 // ============================================================================
 // Jenkinsfile — mcp-context-forge 部署到 腾讯云 TKE
 // ============================================================================
-// 使用官方镜像，通过 kubectl apply 部署 k8s/ 目录下的 YAML 清单。
-// PostgreSQL 和 Redis 使用 TKE 集群已有的外部服务。
+// 使用官方镜像 ghcr.io/ibm/mcp-context-forge，kubectl apply 部署。
+// PostgreSQL 和 Redis 使用集群已有外部服务（Secret 由云平台手动创建）。
 //
-// Coding DevOps 凭据管理需配置:
-//   tke-kubeconfig : 文件类型 → TKE 集群的 kubeconfig
-//   pg-password     : 文本类型 → PostgreSQL 密码（用于渲染 Secret）
-//   redis-password  : 文本类型 → Redis 密码（用于渲染 Secret）
+// Coding DevOps 凭据管理:
+//   tke-kubeconfig : 文件类型 → TKE 集群 kubeconfig
 // ============================================================================
 
 pipeline {
