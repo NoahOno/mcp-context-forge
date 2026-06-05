@@ -1,0 +1,20 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('检出') {
+            steps {
+                checkout([$class: 'GitSCM',
+                    branches: [[name: GIT_BUILD_REF]],
+                    userRemoteConfigs: [[url: GIT_REPO_URL, credentialsId: CREDENTIALS_ID]]
+                ])
+            }
+        }
+
+        stage('测试构建') {
+            steps {
+                sh 'cp Containerfile Dockerfile.build && docker build -f Dockerfile.build -t mcp-context-forge:test .'
+            }
+        }
+    }
+}
