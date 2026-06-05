@@ -1,9 +1,9 @@
 // ============================================================================
 // Jenkinsfile — mcp-context-forge 部署到 腾讯云 TKE
 // ============================================================================
-// 使用官方镜像 ghcr.io/ibm/mcp-context-forge，kubectl apply 部署。
-//
-// Coding DevOps: 凭据管理中添加 TKE 集群凭据，凭据 ID 填入环境变量即可
+// Coding DevOps 需配置:
+//   环境变量 TKE_CLUSTER_CREDENTIAL_ID = <TKE凭据ID>
+//   凭据管理 上传 TKE kubeconfig
 // ============================================================================
 
 pipeline {
@@ -15,12 +15,6 @@ pipeline {
     }
 
     stages {
-        stage('拉取代码') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('部署到 TKE') {
             steps {
                 withCredentials([file(credentialsId: env.TKE_CLUSTER_CREDENTIAL_ID, variable: 'KUBECONFIG')]) {
