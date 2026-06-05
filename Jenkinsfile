@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        FULL_IMAGE = "${CODING_DOCKER_REG_HOST}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}"
+        FULL_IMAGE = "${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}"
     }
 
     stages {
@@ -10,7 +10,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("https://${CODING_DOCKER_REG_HOST}", "${TCR_PUSH_CREDENTIAL_ID}") {
-                        def img = docker.build("${FULL_IMAGE}", "-f Containerfile .")
+                        def img = docker.build("${FULL_IMAGE}", "-f Containerfile ${DOCKER_BUILD_CONTEXT}")
                         img.push()
                     }
                 }

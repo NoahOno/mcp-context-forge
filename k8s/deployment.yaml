@@ -27,7 +27,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: mcpgateway
-          image: tkeprod.tencentcloudcr.com/cyouops/mcp-context-forge:latest
+          image: ccr.ccs.tencentyun.com/cyouops/mcp-context-forge:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 4444
