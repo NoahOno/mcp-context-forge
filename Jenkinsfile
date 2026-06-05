@@ -1,11 +1,3 @@
-// ============================================================================
-// Jenkinsfile — mcp-context-forge 部署到 腾讯云 TKE
-// ============================================================================
-// Coding DevOps 需配置:
-//   环境变量 TKE_CLUSTER_CREDENTIAL_ID = <TKE凭据ID>
-//   凭据管理 上传 TKE kubeconfig
-// ============================================================================
-
 pipeline {
     agent any
 
@@ -15,14 +7,27 @@ pipeline {
     }
 
     stages {
+        stage('检查文件') {
+            steps {
+                sh '''
+                    echo "=== 当前目录 ==="
+                    pwd
+                    echo ""
+                    echo "=== 根目录文件 ==="
+                    ls -la
+                    echo ""
+                    echo "=== k8s 目录 ==="
+                    ls -la k8s/ 2>/dev/null || echo "k8s/ 目录不存在!"
+                '''
+            }
+        }
+
         stage('部署到 TKE') {
             steps {
                 withCredentials([file(credentialsId: env.TKE_CLUSTER_CREDENTIAL_ID, variable: 'KUBECONFIG')]) {
                     sh '''
-                        # 确保 namespace 存在
                         kubectl get namespace mcp-gateway 2>/dev/null || kubectl create namespace mcp-gateway
 
-                        # 部署
                         if [ "${DRY_RUN}" = "true" ]; then
                             kubectl apply -f k8s/ --dry-run=client
                         else
