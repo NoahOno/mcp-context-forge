@@ -1,0 +1,52 @@
+########################################################################
+# values-tke.yaml — 腾讯云 TKE 部署覆盖配置
+########################################################################
+# 只覆盖与官方默认值不同的项，其余使用 charts/mcp-stack/values.yaml 默认值。
+#
+# 官方默认: PostgreSQL=开, Redis=开, PgBouncer=关, HPA=开, 网络策略=开
+# 本文件覆盖: PgBouncer=开, Ingress域名, 密钥, Gunicorn worker数 等
+########################################################################
+
+mcpContextForge:
+  # 镜像 — Jenkinsfile 通过 --set 覆盖
+  image:
+    repository: ghcr.io/ibm/mcp-context-forge
+    tag: latest
+
+  # HPA — 比官方默认(90%)更早触发扩容
+  hpa:
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+  # Ingress — 必须修改为实际域名
+  ingress:
+    host: contextforge.example.com     # TODO: 改为实际域名
+
+  # 应用配置 — 只覆盖与官方默认不同的项
+  config:
+    GUNICORN_WORKERS: "4"              # 官方默认 2，TKE 节点资源更充裕
+    OBSERVABILITY_ENABLED: "true"      # 官方默认 false
+    STRUCTURED_LOGGING_DATABASE_ENABLED: "true"  # 官方默认 false
+
+  # 密钥 — 生产环境务必填写
+  secret:
+    JWT_SECRET_KEY: ""                  # TODO: openssl rand -hex 32 生成
+    AUTH_ENCRYPTION_SECRET: ""          # TODO: openssl rand -hex 16 生成
+    BASIC_AUTH_PASSWORD: ""             # TODO: 填写密码
+    PLATFORM_ADMIN_EMAIL: "admin@example.com"   # TODO: 改为实际邮箱
+    PLATFORM_ADMIN_PASSWORD: ""                  # TODO: 填写管理员密码
+
+########################################################################
+# PgBouncer — 官方默认关闭，这里打开
+########################################################################
+pgbouncer:
+  enabled: true
+
+########################################################################
+# 管理界面 — 不需要暴露
+########################################################################
+pgadmin:
+  enabled: false
+
+redisCommander:
+  enabled: false
