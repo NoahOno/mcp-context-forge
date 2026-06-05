@@ -3,14 +3,18 @@
 // ============================================================================
 // 使用官方镜像 ghcr.io/ibm/mcp-context-forge，kubectl apply 部署。
 //
-// Coding DevOps: 凭据管理中添加 TKE 集群凭据，凭据 ID 填入环境变量即可
+// Coding 平台内置变量（自动注入，无需配置）:
+//   GIT_LOCAL_BRANCH, GIT_COMMIT, DOCKER_IMAGE_VERSION
+// Coding 需手动配置:
+//   环境变量 TKE_CLUSTER_CREDENTIAL_ID = <TKE凭据ID>
+//   凭据管理 上传 TKE kubeconfig
 // ============================================================================
 
 pipeline {
     agent any
 
     parameters {
-        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: '镜像 tag')
+        string(name: 'DOCKER_IMAGE_VERSION', defaultValue: 'latest', description: '官方镜像 tag（latest / v1.0.0 等）')
         booleanParam(name: 'DRY_RUN', defaultValue: false, description: '仅校验，不实际部署')
     }
 
@@ -34,8 +38,13 @@ pipeline {
                         else
                             kubectl apply -f k8s/
                             kubectl set image deployment/mcp-context-forge-mcpgateway \
-                                mcpgateway=ghcr.io/ibm/mcp-context-forge:${IMAGE_TAG} \
+                                mcpgateway=ghcr.io/ibm/mcp-context-forge:${DOCKER_IMAGE_VERSION} \
                                 --namespace mcp-gateway
+                            kubectl annotate deployment/mcp-context-forge-mcpgateway \
+                                --namespace mcp-gateway \
+                                coding.git-branch=${GIT_LOCAL_BRANCH} \
+                                coding.git-commit=${GIT_COMMIT} \
+                                --overwrite
                             kubectl rollout status deployment/mcp-context-forge-mcpgateway \
                                 --namespace mcp-gateway --timeout=5m
                         fi
