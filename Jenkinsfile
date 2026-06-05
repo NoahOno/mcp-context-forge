@@ -1,17 +1,22 @@
 pipeline {
     agent any
 
-    environment {
-        FULL_IMAGE = "${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}"
-    }
-
     stages {
-        stage('构建并推送镜像') {
+        stage('构建镜像') {
             steps {
                 script {
-                    docker.withRegistry("https://${CODING_DOCKER_REG_HOST}", "${TCR_PUSH_CREDENTIAL_ID}") {
-                        def img = docker.build("${FULL_IMAGE}", "-f Containerfile ${DOCKER_BUILD_CONTEXT}")
-                        img.push()
+                    docker.withRegistry("https://${env.CODING_DOCKER_REG_HOST}", "${env.TCR_PUSH_CREDENTIAL_ID}") {
+                        docker.build("${env.DOCKER_IMAGE_NAME}:${env.DOCKER_IMAGE_VERSION}", "-f Containerfile ${env.DOCKER_BUILD_CONTEXT}")
+                    }
+                }
+            }
+        }
+
+        stage('推送制品仓库') {
+            steps {
+                script {
+                    docker.withRegistry("https://${env.CODING_DOCKER_REG_HOST}", "${env.TCR_PUSH_CREDENTIAL_ID}") {
+                        docker.image("${env.DOCKER_IMAGE_NAME}:${env.DOCKER_IMAGE_VERSION}").push()
                     }
                 }
             }
@@ -20,13 +25,13 @@ pipeline {
         stage('部署到 TKE') {
             steps {
                 script {
-                    withKubeConfig([credentialsId: "${TKE_CLUSTER_CREDENTIAL_ID}"]) {
-                        sh '''
-                            sed -i "s|image:.*|image: ${FULL_IMAGE}|" k8s/deployment.yaml
+                    withKubeConfig([credentialsId: "${env.TKE_CLUSTER_CREDENTIAL_ID}"]) {
+                        sh """
+                            sed -i 's#\\(.*\\)${TCR_REPOSITORY_NAME}:.*#\\1${TCR_REPOSITORY_NAME}:${DOCKER_IMAGE_VERSION}#' k8s/deployment.yaml
                             kubectl apply -f k8s/
-                            kubectl rollout status deployment/mcp-context-forge-mcpgateway \
+                            kubectl rollout status deployment/mcp-context-forge-mcpgateway \\
                                 --namespace mcp-gateway --timeout=5m
-                        '''
+                        """
                     }
                 }
             }
