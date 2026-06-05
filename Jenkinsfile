@@ -28,15 +28,14 @@ pipeline {
                         # 确保 namespace 存在
                         kubectl get namespace mcp-gateway 2>/dev/null || kubectl create namespace mcp-gateway
 
-                        # 更新镜像 tag
-                        cd k8s
-                        sed -i "s|image: ghcr.io/ibm/mcp-context-forge:.*|image: ghcr.io/ibm/mcp-context-forge:${IMAGE_TAG}|" deployment.yaml
-
                         # 部署
                         if [ "${DRY_RUN}" = "true" ]; then
-                            kubectl apply -f . --dry-run=client
+                            kubectl apply -f k8s/ --dry-run=client
                         else
-                            kubectl apply -f .
+                            kubectl apply -f k8s/
+                            kubectl set image deployment/mcp-context-forge-mcpgateway \
+                                mcpgateway=ghcr.io/ibm/mcp-context-forge:${IMAGE_TAG} \
+                                --namespace mcp-gateway
                             kubectl rollout status deployment/mcp-context-forge-mcpgateway \
                                 --namespace mcp-gateway --timeout=5m
                         fi
