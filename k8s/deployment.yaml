@@ -1,0 +1,130 @@
+# deployment.yaml — mcp-context-forge 网关部署
+# 使用外部 PostgreSQL 和 Redis（通过 Secret 注入连接信息）
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-context-forge-mcpgateway
+  namespace: mcp-gateway
+  labels:
+    app: mcp-context-forge-mcpgateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mcp-context-forge-mcpgateway
+  template:
+    metadata:
+      labels:
+        app: mcp-context-forge-mcpgateway
+    spec:
+      serviceAccountName: mcp-context-forge
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: mcpgateway
+          image: ghcr.io/ibm/mcp-context-forge:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4444
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: false
+
+          # ─── 环境变量 ───
+          env:
+            # PostgreSQL 连接（从外部 Secret 读取）
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-external-credentials
+                  key: host
+            - name: POSTGRES_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-external-credentials
+                  key: port
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-external-credentials
+                  key: dbname
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-external-credentials
+                  key: user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-external-credentials
+                  key: password
+
+            # Redis 连接（从外部 Secret 读取）
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis-external-credentials
+                  key: REDIS_URL
+
+            # 派生 URL（必须在 POSTGRES_* 之后，$(VAR) 占位符才能正确展开）
+            - name: DATABASE_URL
+              value: "postgresql+psycopg://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)"
+
+            # 自动运行数据库迁移（单副本或使用 advisory lock 的多副本均安全）
+            - name: MCPGATEWAY_SKIP_MIGRATIONS
+              value: "false"
+
+          # 批量注入 ConfigMap 和 Secret
+          envFrom:
+            - secretRef:
+                name: mcp-context-forge-gateway-secret
+            - configMapRef:
+                name: mcp-context-forge-gateway-config
+
+          # 健康检查
+          startupProbe:
+            exec:
+              command: ["sh", "-c", "sleep 10"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 15
+            failureThreshold: 1
+
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 4444
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 70
+            successThreshold: 1
+            failureThreshold: 8
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4444
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 70
+            successThreshold: 1
+            failureThreshold: 10
+
+          # 资源限制
+          resources:
+            limits:
+              cpu: "2"
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 768Mi

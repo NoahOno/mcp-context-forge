@@ -1,0 +1,18 @@
+# service.yaml — ClusterIP Service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-context-forge-mcpgateway
+  namespace: mcp-gateway
+  labels:
+    app: mcp-context-forge-mcpgateway
+spec:
+  type: ClusterIP
+  selector:
+    app: mcp-context-forge-mcpgateway
+  ports:
+    - name: http
+      port: 80
+      targetPort: 4444
+      protocol: TCP

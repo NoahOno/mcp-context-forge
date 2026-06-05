@@ -1,0 +1,6 @@
+# namespace.yaml — 部署命名空间
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mcp-gateway
