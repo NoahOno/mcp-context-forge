@@ -2,10 +2,11 @@
 // Jenkinsfile — mcp-context-forge 部署到 腾讯云 TKE
 // ============================================================================
 // 使用官方镜像 ghcr.io/ibm/mcp-context-forge，kubectl apply 部署。
-// PostgreSQL 和 Redis 使用集群已有外部服务（Secret 由云平台手动创建）。
 //
-// Coding DevOps 凭据管理:
-//   tke-kubeconfig : 文件类型 → TKE 集群 kubeconfig
+// Coding DevOps 凭据管理 → 新增凭据:
+//   凭据ID: tke-kubeconfig
+//   类型:   上传文件
+//   内容:   TKE 集群的 kubeconfig 文件
 // ============================================================================
 
 pipeline {
@@ -23,11 +24,9 @@ pipeline {
             }
         }
 
-        stage('渲染配置并部署') {
+        stage('部署到 TKE') {
             steps {
-                withCredentials([
-                    file(credentialsId: 'tke-kubeconfig', variable: 'KUBECONFIG')
-                ]) {
+                withCredentials([file(credentialsId: 'tke-kubeconfig', variable: 'KUBECONFIG')]) {
                     sh '''
                         # 确保 namespace 存在
                         kubectl get namespace mcp-gateway 2>/dev/null || kubectl create namespace mcp-gateway
