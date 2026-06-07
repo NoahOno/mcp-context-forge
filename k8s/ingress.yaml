@@ -1,0 +1,22 @@
+# ingress.yaml — 网关 Ingress（通过 Traefik 暴露）
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mcp-context-forge-ingress
+  namespace: mcp-gateway
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: gateway.ono
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mcp-context-forge-mcpgateway
+            port:
+              number: 80

@@ -27,7 +27,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: mcpgateway
-          image: ccr.ccs.tencentyun.com/cyouops/mcp-context-forge:latest
+          image: ghcr.io/ibm/mcp-context-forge:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 4444
@@ -102,21 +102,21 @@ spec:
             httpGet:
               path: /ready
               port: 4444
-            initialDelaySeconds: 30
-            periodSeconds: 15
-            timeoutSeconds: 70
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 2
             successThreshold: 1
-            failureThreshold: 8
+            failureThreshold: 3
 
           livenessProbe:
             httpGet:
               path: /health
               port: 4444
-            initialDelaySeconds: 120
-            periodSeconds: 30
-            timeoutSeconds: 70
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 2
             successThreshold: 1
-            failureThreshold: 10
+            failureThreshold: 3
 
           # 资源限制
           resources:

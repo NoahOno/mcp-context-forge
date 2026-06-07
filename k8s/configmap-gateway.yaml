@@ -33,5 +33,13 @@ data:
   STRUCTURED_LOGGING_ENABLED: "true"
   STRUCTURED_LOGGING_DATABASE_ENABLED: "true"
 
+  # Cache
+  CACHE_TYPE: "redis"
+  CACHE_PREFIX: "mcpgw:"
+
+  # SSRF Protection
+  SSRF_PROTECTION_ENABLED: "true"
+  SSRF_ALLOW_PRIVATE_NETWORKS: "true"
+
   # Observability
-  OBSERVABILITY_ENABLED: "true"
+  OBSERVABILITY_ENABLED: "false"
